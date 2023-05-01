@@ -1,15 +1,16 @@
 import itertools
-import numpy as np
-import pandas as pd # type: ignore
 import time
+from typing import List
+
+import numpy as np
+import pandas as pd  # type: ignore
 from rich import print
-from rich.traceback import install
 from rich.console import Console
 from rich.table import Table
-from typing import List
-from rich_tools import table_to_df # type: ignore
+from rich.traceback import install
+from rich_tools import table_to_df  # type: ignore
+
 from constructiva import Constructiva
-import random
 from grasp import GRASP
 
 console = Console()
