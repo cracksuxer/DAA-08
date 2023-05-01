@@ -52,7 +52,7 @@ def main() -> None:
     grasp_table.add_column("S", style="dim", no_wrap=True)
     grasp_table.add_column("CPU", style="dim", no_wrap=True)
 
-    problem_list_name = [
+    problem_list_name: List[str] = [
         'max_div_15_2.txt',
         'max_div_15_3.txt',
         'max_div_20_2.txt',
@@ -80,11 +80,10 @@ def main() -> None:
         index_grasp: int = problem_list.index(problem)
         data_grasp: FndArray = np.array(problem)
         start = time.perf_counter()
-        solution, diversity = GRASP(data_grasp, _iter, m, lrc).solve(1)
+        solution, diversity = GRASP(data_grasp, _iter, m, lrc).solve()
         end = time.perf_counter()
         total_time = end - start
         grasp_table.add_row(problem_list_name[index_grasp], str(len(data_grasp)), str(len(data_grasp[0])), str(m), str(_iter), str(lrc), str(diversity), '{' + ', '.join(str(s) for s in solution) + '}', str(total_time))
-
 
     grasp_df = table_to_df(grasp_table)
     grasp_df.to_csv("./resultados/grasp.csv", index=False)

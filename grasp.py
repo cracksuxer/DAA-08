@@ -51,7 +51,6 @@ def generate_neighbour_swap(solution: FndArray, points: FndArray) -> List[FndArr
             neighbour_solutions.append(neighbour_solution)
     return neighbour_solutions
 
-
 def ditance_to_closest_point(
     point: FndArray, points: List[FndArray]
 ) -> Tuple[FndArray, np.float_]:
@@ -63,12 +62,10 @@ def ditance_to_closest_point(
     distance_closes_point = np.linalg.norm(point - points[closes_point_index])
     return (point, distance_closes_point)
 
-
 class GRASP:
     """
     GRASP algorithm implementation.
     """
-
     def __init__(self, data_points: FndArray, max_iter: int, max_construct_len: int, lrc_size: int):
         self._data_points = data_points
         self._max_iter = max_iter
@@ -101,19 +98,13 @@ class GRASP:
             console.print(f"Added point: {solution[-1]}")
         self._greedy_solution = np.array(solution)
             
-    def __postprocess(self, option: int = 1) -> None:
+    def __postprocess(self) -> None:
         if self._greedy_solution is not None:
             current_solution = self._greedy_solution.copy()
         else:
             raise ValueError("Greedy solution is not defined")
 
-        if option == 1:
-            current_solution = self.__add_points(current_solution)
-        elif option == 2:
-            current_solution = self.__remove_points(current_solution)
-        elif option == 3:
-            current_solution = self.__swap_points(current_solution)
-
+        current_solution = self.__swap_points(current_solution)
         self._local_solution = current_solution
 
     def __swap_points(self, current_solution: FndArray) -> FndArray:
@@ -141,54 +132,6 @@ class GRASP:
     ) -> bool:
         return self.__calc_cost(solution1) == self.__calc_cost(solution2)
 
-    def __remove_points(self, current_solution: FndArray) -> FndArray:
-        console.print("Deleting method")
-        while True:
-            console.print(
-                f"Current solution ({self.__calc_cost(current_solution)}):\n{current_solution}"
-            )
-            neighbour_solutions = generate_neighbour_del(current_solution)
-            neighbour_solutions.sort(key=self.__calc_cost)
-            best_neighbour_solution = neighbour_solutions[0]
-            if self.__remove_passes_umbral(current_solution, best_neighbour_solution):
-                break
-            current_solution = best_neighbour_solution
-        return current_solution
-
-    def __remove_passes_umbral(
-        self, current_solution: FndArray, best_neighbour_solution: FndArray
-    ) -> bool:
-        return (
-            self.__calc_cost(current_solution)
-            < (1 - 0.2) * self.__calc_cost(best_neighbour_solution)
-            or len(current_solution) == 2
-        )
-
-    def __add_points(self, current_solution: FndArray) -> FndArray:
-        console.print("Adding method")
-        while True:
-            console.print(
-                f"Current solution ({self.__calc_cost(current_solution)}):\n{current_solution}"
-            )
-            neighbour_solutions = generate_neighbour_add(
-                current_solution, self._data_points
-            )
-            best_neighbour_solution = neighbour_solutions[0]
-            if self.__add_passes_umbral(
-                current_solution, neighbour_solutions
-            ) or self.__stop_condition(current_solution, best_neighbour_solution):
-                break
-            current_solution = best_neighbour_solution
-        return current_solution
-
-    def __add_passes_umbral(
-        self, current_solution: FndArray, neighbour_solutions: List[FndArray]
-    ) -> bool:
-        return (
-            len(current_solution) / len(self._data_points) >= 0.3
-            or not neighbour_solutions
-        )
-
     def __stop_condition(
         self, current_solution: FndArray, best_neighbour_solution: FndArray
     ) -> bool:
@@ -202,7 +145,7 @@ class GRASP:
         ) < self.__calc_cost(self._best_solution):
             self._best_solution = self._local_solution
 
-    def __calc_cost(self, cluster_locs: FndArray, sse: bool = False) -> Union[int, float]:
+    def __calc_cost(self, cluster_locs: FndArray) -> Union[int, float]:
         """
         Calcula la diversidad de una solución al Maximum Diversity Problem.
         
@@ -219,15 +162,15 @@ class GRASP:
         distancias = np.linalg.norm(cluster_locs - centro, axis=1)
         return np.mean(distancias)
 
-    def solve(self, option: int = 1) -> Tuple[FndArray, float]:
+    def solve(self) -> Tuple[FndArray, float]:
         """
         Solve the problem.
         """
         for _ in range(self._max_iter):
             self.__construct()
-            self.__postprocess(option=option)
+            self.__postprocess()
             self.__update_best_solution()
-
+            
         diversity = self.__calc_cost(cast(FndArray, self._best_solution))
 
         return (cast(FndArray, self._best_solution), diversity)
