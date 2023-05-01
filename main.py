@@ -76,24 +76,18 @@ def main() -> None:
     constructiva_df = table_to_df(constructiva_table)
     constructiva_df.to_csv("./resultados/constructiva.csv", index=False)
 
-    for problem, m in itertools.product(problem_list, range(2, 5)):
+    for problem, m in itertools.product(problem_list, range(2, 6)):
         _iter: int = 0
-        for lrc in range(2, 3):
-            if lrc == 2:
-                _iter = 10
-            elif lrc == 3:
-                _iter = 20
-                
+        for _iter, lrc in itertools.product(range(10, 30, 10), range(2, 4)):
             index_grasp: int = problem_list.index(problem)
             data_grasp: FndArray = np.array(problem)
             start = time.perf_counter()
             solution, diversity = GRASP(data_grasp, _iter, m, lrc).solve(1)
             end = time.perf_counter()
             total_time = end - start
-            
-            grasp_table.add_row(problem_list_name[index_grasp], str(len(data)), str(len(data[0])), str(m), str(_iter), str(lrc), str(diversity), '{' + ', '.join(str(s) for s in solution) + '}', str(total_time))
-            
-            
+            grasp_table.add_row(problem_list_name[index_grasp], str(len(data_grasp)), str(len(data_grasp[0])), str(m), str(_iter), str(lrc), str(diversity), '{' + ', '.join(str(s) for s in solution) + '}', str(total_time))
+
+
     grasp_df = table_to_df(grasp_table)
     grasp_df.to_csv("./resultados/grasp.csv", index=False)
             
