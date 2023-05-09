@@ -92,7 +92,7 @@ def main() -> None:
     # grasp_df.to_csv("./resultados/grasp.csv", index=False)
 
     csv_title_ending: List[str] = [
-        "_constructiva_csp"
+        "_constructiva_csp",
         "_grasp_csp", 
         "_consutructiva_bp", 
         "_grasp_bp"
