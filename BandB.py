@@ -122,14 +122,14 @@ class BranchAndBound():
                 
                 actual_node = self.active_nodes.pop()
                 
-        actual_node_z = objective_function(actual_node.solution)
-        if actual_node_z > objective_function(lower_bound):
-            lower_bound = actual_node.solution
-            
-        for i in range(len(self.active_nodes)):
-            if objective_function(self.active_nodes[i].solution) > objective_function(lower_bound):
-                self.active_nodes.remove(self.active_nodes[i])
-                i -= 1
+            actual_node_z = objective_function(actual_node.solution)
+            if actual_node_z > objective_function(lower_bound):
+                lower_bound = actual_node.solution
+                
+            for i in range(len(self.active_nodes)):
+                if objective_function(self.active_nodes[i].solution) > objective_function(lower_bound):
+                    self.active_nodes.remove(self.active_nodes[i])
+                    i -= 1
                 
         return lower_bound, self.n_nodes, objective_function(lower_bound)
             
