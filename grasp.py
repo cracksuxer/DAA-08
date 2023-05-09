@@ -1,14 +1,12 @@
 """
 Grasp algorithm module.
 """
+from xml.dom import Node
 import numpy as np
-from rich.console import Console
 from rich.traceback import install
-from typing import List, Tuple, Optional, Union, Set, cast
+from typing import List, Tuple, Optional, Union, cast
 
 FndArray = np.ndarray[np.dtype[np.float_], np.dtype[np.uint]]
-
-console = Console()
 install(show_locals=True)
 
 
@@ -34,6 +32,19 @@ def generate_neighbour_del(solution: FndArray) -> List[FndArray]:
         neighbour_solution = np.delete(solution, i, axis=0)
         neighbour_solutions.append(neighbour_solution)
     return neighbour_solutions
+
+def calculate_euclidean_distance(point1: FndArray, point2: FndArray) -> float:
+    """Calculates the Euclidean distance between two n-dimensional points."""
+    return float(np.sqrt(np.sum((point1 - point2) ** 2)))
+
+def calculate_gravity_center(points: FndArray) -> FndArray:
+    """Calculates the gravity center of a list of n-dimensional points."""
+    return np.mean(points, axis=0) # type: ignore
+
+def best_kvalues(distances: List[Tuple[int, float]], k: int = 3) -> List[Tuple[int, float]]:
+    """Returns the k elements with the highest values in a list of tuples (index, value)."""
+    sortedDistances = sorted(distances, key=lambda x: x[1], reverse=True)
+    return sortedDistances[:k]
 
 
 def generate_neighbour_swap(solution: FndArray, points: FndArray) -> List[FndArray]:
@@ -81,21 +92,23 @@ class GRASP:
     def __repr__(self) -> str:
         return f"GRASP({self._num_clusters}, {self._data_points}, {self._max_iter})"
 
-    def __distancia(self, x, y):
-        return np.linalg.norm(x - y)
-
     def __construct(self) -> None:
+        """Constructs an initial solution for the GRASP algorithm."""
         self._greedy_solution = np.empty(
             0, dtype=np.dtype([("floats", np.float_), ("ints", np.uint)])
         )
-        solution = [self._data_points[np.random.randint(0, len(self._data_points))]]
-        console.print(f"Random point: {solution[0]}")
-        while len(solution) < self._num_clusters:
-            distances = [self.__distancia(point, solution[-1]) for point in self._data_points]
-            lrc_indices = np.argsort(distances)[-self._lrc_size:]
-            selected_index = np.random.choice(lrc_indices)
-            solution.append(self._data_points[selected_index])
-            console.print(f"Added point: {solution[-1]}")
+        initialElements = self._data_points.copy()
+        solution: List[FndArray] = []
+        gravityCenter = calculate_gravity_center(initialElements)
+        while len(solution) < self._max_construct_len:
+            distances = [(i, calculate_euclidean_distance(gravityCenter, initialElements[i])) for i in range(len(initialElements))]
+            bestKDistances = best_kvalues(distances)
+            random = np.random.randint(len(bestKDistances))
+            chosenElement = np.copy(initialElements[bestKDistances[random][0]])
+            initialElements = np.delete(initialElements, bestKDistances[random][0], axis=0)
+            solution.append(chosenElement)
+            solution_array = np.concatenate(solution, axis=0)
+            gravityCenter = calculate_gravity_center(solution_array)
         self._greedy_solution = np.array(solution)
             
     def __postprocess(self) -> None:
@@ -108,12 +121,8 @@ class GRASP:
         self._local_solution = current_solution
 
     def __swap_points(self, current_solution: FndArray) -> FndArray:
-        console.print("Swapping method")
         s_data_points = self._data_points.copy()
         while True:
-            console.print(
-                f"Current solution ({self.__calc_cost(current_solution)}):\n{current_solution}"
-            )
             neighbour_solutions = generate_neighbour_swap(
                 current_solution, s_data_points
             )
@@ -158,9 +167,11 @@ class GRASP:
         - La diversidad de la solución, medida como la distancia promedio de los elementos seleccionados
         al centro de gravedad del conjunto.
         """
-        centro = np.mean(cluster_locs, axis=0)
-        distancias = np.linalg.norm(cluster_locs - centro, axis=1)
-        return np.mean(distancias)
+        z: float = 0
+        for i in range(len(cluster_locs)):
+            for j in range(i + 1, len(cluster_locs)):
+                z += calculate_euclidean_distance(cluster_locs[i], cluster_locs[j])
+        return z
 
     def solve(self) -> Tuple[FndArray, float]:
         """
